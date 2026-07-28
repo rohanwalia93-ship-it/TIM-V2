@@ -1,0 +1,143 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "leaflet/dist/leaflet.css";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  --background: #f8fafc;
+  --foreground: #0f172a;
+  --card: #ffffff;
+  --card-foreground: #0f172a;
+  --muted: #f1f5f9;
+  --muted-foreground: #64748b;
+  --border: #e2e8f0;
+  --input: #e2e8f0;
+  --ring: #4f46e5;
+  --accent: #4f46e5;
+  --accent-foreground: #ffffff;
+  --primary: #0f172a;
+  --primary-foreground: #f8fafc;
+  --secondary: #f1f5f9;
+  --secondary-foreground: #0f172a;
+  --destructive: #dc2626;
+  --destructive-foreground: #fef2f2;
+
+  --go: #059669;
+  --go-bg: #ecfdf5;
+  --go-border: #a7f3d0;
+  --conditional: #b45309;
+  --conditional-bg: #fffbeb;
+  --conditional-border: #fde68a;
+  --nogo: #dc2626;
+  --nogo-bg: #fef2f2;
+  --nogo-border: #fecaca;
+
+  --confidence-high: #059669;
+  --confidence-medium: #d97706;
+  --confidence-low: #94a3b8;
+
+  --radius: 0.75rem;
+}
+
+.dark {
+  --background: #0b1120;
+  --foreground: #e2e8f0;
+  --card: #111827;
+  --card-foreground: #e2e8f0;
+  --muted: #1e293b;
+  --muted-foreground: #94a3b8;
+  --border: #1f2937;
+  --input: #1f2937;
+  --ring: #818cf8;
+  --accent: #818cf8;
+  --accent-foreground: #0b1120;
+  --primary: #e2e8f0;
+  --primary-foreground: #0b1120;
+  --secondary: #1e293b;
+  --secondary-foreground: #e2e8f0;
+  --destructive: #f87171;
+  --destructive-foreground: #450a0a;
+
+  --go: #34d399;
+  --go-bg: #052e21;
+  --go-border: #065f46;
+  --conditional: #fbbf24;
+  --conditional-bg: #2e2205;
+  --conditional-border: #92400e;
+  --nogo: #f87171;
+  --nogo-bg: #2e0a0a;
+  --nogo-border: #7f1d1d;
+
+  --confidence-high: #34d399;
+  --confidence-medium: #fbbf24;
+  --confidence-low: #64748b;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+
+  --color-go: var(--go);
+  --color-go-bg: var(--go-bg);
+  --color-go-border: var(--go-border);
+  --color-conditional: var(--conditional);
+  --color-conditional-bg: var(--conditional-bg);
+  --color-conditional-border: var(--conditional-border);
+  --color-nogo: var(--nogo);
+  --color-nogo-bg: var(--nogo-bg);
+  --color-nogo-border: var(--nogo-border);
+
+  --color-confidence-high: var(--confidence-high);
+  --color-confidence-medium: var(--confidence-medium);
+  --color-confidence-low: var(--confidence-low);
+
+  --radius-lg: var(--radius);
+  --radius-md: calc(var(--radius) - 0.25rem);
+  --radius-sm: calc(var(--radius) - 0.375rem);
+
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "cv11", "ss01";
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+.leaflet-container {
+  width: 100%;
+  height: 100%;
+  border-radius: var(--radius-lg);
+}
