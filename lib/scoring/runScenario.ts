@@ -3,9 +3,11 @@ import { runDcf, type DcfResult } from "@/lib/finance/dcf";
 import { runNaturalModel, type NaturalModelInputs } from "@/lib/scoring/natural";
 import { runManMadeModel, type ManMadeModelInputs } from "@/lib/scoring/manmade";
 import { runEventModel, type EventModelInputs } from "@/lib/scoring/event";
+import { runAccommodationModel, type AccommodationModelInputs } from "@/lib/scoring/accommodation";
+import { getAccommodationOccupancyRamp } from "@/lib/model-defaults/accommodation";
 import { BENCHMARKS } from "@/lib/benchmarks";
 import type { ArchetypeResult } from "@/lib/scoring/types";
-import type { Archetype, CityContextData } from "@/lib/store/scenarioStore";
+import type { Engine, CityContextData } from "@/lib/store/scenarioStore";
 import type { Confidence } from "@/lib/sources/types";
 import type { CatchmentZone, Competitor } from "@/lib/scoring/manmade";
 
@@ -27,20 +29,23 @@ function buildAccessPillar(hotelRooms: number | undefined, airScore: number | un
   };
 }
 
+export type ScenarioInputs =
+  | { kind: "natural"; natural: NaturalModelInputs }
+  | { kind: "manmade"; manmade: ManMadeModelInputs; catchmentZones: CatchmentZone[]; competitors: Competitor[] }
+  | { kind: "event"; event: EventModelInputs }
+  | { kind: "accommodation"; accommodation: Omit<AccommodationModelInputs, "occupancyRamp"> };
+
 export function runScenario(
-  archetype: Archetype,
+  engine: Engine,
   cityContext: CityContextData,
   dataConfidence: Confidence,
-  inputs:
-    | { kind: "natural"; natural: NaturalModelInputs }
-    | { kind: "manmade"; manmade: ManMadeModelInputs; catchmentZones: CatchmentZone[]; competitors: Competitor[] }
-    | { kind: "event"; event: EventModelInputs },
+  inputs: ScenarioInputs,
 ): RunScenarioResult {
   let archetypeResult: ArchetypeResult;
 
-  if (archetype === "natural" && inputs.kind === "natural") {
+  if (engine === "natural" && inputs.kind === "natural") {
     archetypeResult = runNaturalModel(inputs.natural);
-  } else if (archetype === "manmade" && inputs.kind === "manmade") {
+  } else if (engine === "manmade" && inputs.kind === "manmade") {
     const touristArrivals = cityContext.worldBank?.touristArrivals?.latest?.value ?? 0;
     archetypeResult = runManMadeModel({
       ...inputs.manmade,
@@ -49,13 +54,15 @@ export function runScenario(
       touristArrivals,
       rampCurve: [...BENCHMARKS.rampCurveDefault.value],
     });
-  } else if (archetype === "event" && inputs.kind === "event") {
+  } else if (engine === "event" && inputs.kind === "event") {
     archetypeResult = runEventModel({
       ...inputs.event,
       directIndirectInducedSplit: { ...BENCHMARKS.directIndirectInducedSplitDefault.value },
     });
+  } else if (engine === "accommodation" && inputs.kind === "accommodation") {
+    archetypeResult = runAccommodationModel({ ...inputs.accommodation, occupancyRamp: getAccommodationOccupancyRamp() });
   } else {
-    throw new Error("Mismatched archetype/inputs kind");
+    throw new Error("Mismatched engine/inputs kind");
   }
 
   const pillarInputs: Record<Pillar, PillarInput> = {

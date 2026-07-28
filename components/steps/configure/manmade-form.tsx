@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 import { NumberField } from "@/components/steps/configure/number-field";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -9,10 +10,16 @@ import { useScenarioStore } from "@/lib/store/scenarioStore";
 import { buildManMadeScalarDefaults, deriveCatchmentZones, deriveCompetitors, type ManMadeScalarKey } from "@/lib/model-defaults/manmade";
 import type { ResolvedValue } from "@/lib/sources/types";
 
-const FIELD_GROUPS: { title: string; description: string; keys: ManMadeScalarKey[] }[] = [
-  { title: "Demand model (Huff / gravity)", description: "Distance-decay attendance and competitive share.", keys: ["residentPenetrationRatePercent", "betaDistanceDecay", "touristCaptureRatePercent", "ownAttractivenessScore", "huffLambda"] },
-  { title: "Pricing & operations", description: "Feeds revenue and capacity checks.", keys: ["ticketPriceUsd", "perCapInParkSpendUsd", "designedDailyCapacity", "operatingDaysPerYear"] },
-  { title: "Investment", description: "Feeds the shared DCF engine.", keys: ["capex", "annualOpexBaseUsd", "variableOpexPercentOfRevenue", "horizonYears"] },
+const PRIMARY_KEYS: ManMadeScalarKey[] = ["ticketPriceUsd", "perCapInParkSpendUsd", "capex", "designedDailyCapacity", "ownAttractivenessScore"];
+const ADVANCED_KEYS: ManMadeScalarKey[] = [
+  "residentPenetrationRatePercent",
+  "betaDistanceDecay",
+  "touristCaptureRatePercent",
+  "huffLambda",
+  "operatingDaysPerYear",
+  "annualOpexBaseUsd",
+  "variableOpexPercentOfRevenue",
+  "horizonYears",
 ];
 
 export function ManMadeForm() {
@@ -62,15 +69,18 @@ export function ManMadeForm() {
     setManmadeCatchment(newPop, zones, competitors);
   }
 
+  function renderField(key: ManMadeScalarKey) {
+    const rv = defaults[key];
+    const value = manmadeInputs[key] ?? rv.value;
+    return <NumberField key={key} resolvedValue={rv} value={value} onChange={(v) => handleChange(key, v)} />;
+  }
+
   return (
     <div className="space-y-4">
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-sm">Catchment & competition</CardTitle>
-          <CardDescription>
-            Derived from World Bank population density and OpenStreetMap comparable attractions — a low-confidence
-            assumption you should sanity-check.
-          </CardDescription>
+          <CardDescription>Estimated from population and nearby attractions — check and adjust if it looks off.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="max-w-xs space-y-1.5">
@@ -95,7 +105,7 @@ export function ManMadeForm() {
           </div>
           {manmadeCompetitors.length > 0 && (
             <div>
-              <p className="mb-1.5 text-xs font-medium text-muted-foreground">Competing attractions modeled (Huff share)</p>
+              <p className="mb-1.5 text-xs font-medium text-muted-foreground">Nearby competing attractions</p>
               <ul className="grid gap-1 text-xs sm:grid-cols-2">
                 {manmadeCompetitors.map((c) => (
                   <li key={c.name} className="flex justify-between rounded border border-border px-2 py-1">
@@ -109,21 +119,26 @@ export function ManMadeForm() {
         </CardContent>
       </Card>
 
-      {FIELD_GROUPS.map((group) => (
-        <Card key={group.title}>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm">{group.title}</CardTitle>
-            <CardDescription>{group.description}</CardDescription>
-          </CardHeader>
-          <CardContent className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {group.keys.map((key) => {
-              const rv = defaults[key];
-              const value = manmadeInputs[key] ?? rv.value;
-              return <NumberField key={key} resolvedValue={rv} value={value} onChange={(v) => handleChange(key, v)} />;
-            })}
-          </CardContent>
-        </Card>
-      ))}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm">Key inputs</CardTitle>
+          <CardDescription>Drives forecast attendance, revenue, and capacity checks.</CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{PRIMARY_KEYS.map(renderField)}</CardContent>
+      </Card>
+
+      <Card>
+        <CardContent className="pt-4">
+          <Accordion type="single" collapsible>
+            <AccordionItem value="advanced" className="border-none">
+              <AccordionTrigger className="text-sm">Advanced settings (optional)</AccordionTrigger>
+              <AccordionContent>
+                <div className="grid gap-4 pt-2 sm:grid-cols-2 lg:grid-cols-3">{ADVANCED_KEYS.map(renderField)}</div>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
+        </CardContent>
+      </Card>
     </div>
   );
 }

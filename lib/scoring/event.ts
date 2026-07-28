@@ -143,6 +143,20 @@ export function runEventModel(inputs: EventModelInputs): ArchetypeResult {
       note: "This is a single-occurrence event — economic impact is a one-time uplift, not a recurring revenue base. Consider a recurring/annual format to compound the return.",
     });
   }
+  if (inputs.incrementalityRatePercent > 85) {
+    riskFlags.push({
+      label: "Aggressive incrementality assumption",
+      severity: "medium" as const,
+      note: "An incrementality rate above ~85% assumes almost every attendee is a genuinely new visitor — stress-test this against a more conservative rate, since overstating it inflates every downstream economic-impact number.",
+    });
+  }
+  if (inputs.uniquenessScore < 50) {
+    riskFlags.push({
+      label: "Low differentiation / substitution risk",
+      severity: "medium" as const,
+      note: "A low uniqueness score suggests attendees could substitute this for another local draw — which undercuts the incrementality assumption the whole economic-impact case rests on.",
+    });
+  }
 
   return {
     moduleName: "Event — Economic-Impact (I-O Multiplier) Model",

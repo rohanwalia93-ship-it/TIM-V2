@@ -9,15 +9,16 @@ import { Slider } from "@/components/ui/slider";
 import { VerdictPill } from "@/components/verdict-pill";
 import { CashflowChart } from "@/components/dashboard/cashflow-chart";
 import { TornadoChart, type TornadoDatum } from "@/components/dashboard/tornado-chart";
-import { useScenarioStore, type Archetype } from "@/lib/store/scenarioStore";
+import { useScenarioStore, getEngine, type Engine } from "@/lib/store/scenarioStore";
 import { runScenario, type RunScenarioResult } from "@/lib/scoring/runScenario";
 import type { NaturalModelInputs } from "@/lib/scoring/natural";
 import type { ManMadeModelInputs } from "@/lib/scoring/manmade";
 import type { EventModelInputs } from "@/lib/scoring/event";
+import type { AccommodationModelInputs } from "@/lib/scoring/accommodation";
 import { overallConfidence } from "@/lib/resolveInput";
 import { formatCurrency } from "@/lib/utils";
 
-const DRIVERS: Record<Archetype, { key: string; label: string }[]> = {
+const DRIVERS_BY_ENGINE: Record<Engine, { key: string; label: string }[]> = {
   natural: [
     { key: "perVisitorYieldUsd", label: "Per-visitor yield" },
     { key: "captureRatePercent", label: "Capture rate (% of ECC)" },
@@ -33,19 +34,29 @@ const DRIVERS: Record<Archetype, { key: string; label: string }[]> = {
     { key: "residentPenetrationRatePercent", label: "Resident penetration rate" },
   ],
   event: [
-    { key: "ticketPriceUsd", label: "Ticket price" },
+    { key: "ticketPriceUsd", label: "Ticket price / registration fee" },
     { key: "totalAttendance", label: "Total attendance" },
     { key: "incrementalityRatePercent", label: "Incrementality rate" },
     { key: "hostingCostUsd", label: "Hosting cost" },
     { key: "regionalOutputMultiplier", label: "Regional output multiplier" },
   ],
+  accommodation: [
+    { key: "adrUsd", label: "Average daily rate" },
+    { key: "stabilizedOccupancyPercent", label: "Stabilized occupancy" },
+    { key: "numberOfRooms", label: "Number of rooms" },
+    { key: "constructionCostPerKeyUsd", label: "Construction cost per key" },
+    { key: "gopMarginPercent", label: "GOP margin" },
+  ],
 };
 
 export function Step6Sensitivity() {
   const archetype = useScenarioStore((s) => s.archetype);
+  const product = useScenarioStore((s) => s.product);
   const naturalInputs = useScenarioStore((s) => s.naturalInputs);
   const manmadeInputs = useScenarioStore((s) => s.manmadeInputs);
   const eventInputs = useScenarioStore((s) => s.eventInputs);
+  const miceInputs = useScenarioStore((s) => s.miceInputs);
+  const accommodationInputs = useScenarioStore((s) => s.accommodationInputs);
   const manmadeCatchmentZones = useScenarioStore((s) => s.manmadeCatchmentZones);
   const manmadeCompetitors = useScenarioStore((s) => s.manmadeCompetitors);
   const cityContext = useScenarioStore((s) => s.cityContext);
@@ -55,14 +66,15 @@ export function Step6Sensitivity() {
   const comparisonScenario = useScenarioStore((s) => s.comparisonScenario);
 
   const dataConfidence = React.useMemo(() => overallConfidence(Object.values(resolvedValues)), [resolvedValues]);
-  const drivers = React.useMemo(() => (archetype ? DRIVERS[archetype] : []), [archetype]);
+  const engine = getEngine(archetype, product);
+  const drivers = React.useMemo(() => (engine ? DRIVERS_BY_ENGINE[engine] : []), [engine]);
   const [deltas, setDeltas] = React.useState<Record<string, number>>({});
 
   const computeForDeltas = React.useCallback(
     (d: Record<string, number>): RunScenarioResult | null => {
-      if (!archetype) return null;
+      if (!engine) return null;
       try {
-        if (archetype === "natural") {
+        if (engine === "natural") {
           const base = naturalInputs as unknown as Record<string, number>;
           const adjusted = { ...base };
           for (const [k, pct] of Object.entries(d)) adjusted[k] = base[k] * (1 + pct / 100);
@@ -71,7 +83,7 @@ export function Step6Sensitivity() {
             natural: adjusted as unknown as NaturalModelInputs,
           });
         }
-        if (archetype === "manmade") {
+        if (engine === "manmade") {
           const base = manmadeInputs as unknown as Record<string, number>;
           const adjusted = { ...base };
           for (const [k, pct] of Object.entries(d)) adjusted[k] = base[k] * (1 + pct / 100);
@@ -82,7 +94,16 @@ export function Step6Sensitivity() {
             competitors: manmadeCompetitors,
           });
         }
-        const base = eventInputs as unknown as Record<string, number>;
+        if (engine === "accommodation") {
+          const base = accommodationInputs as unknown as Record<string, number>;
+          const adjusted = { ...base };
+          for (const [k, pct] of Object.entries(d)) adjusted[k] = base[k] * (1 + pct / 100);
+          return runScenario("accommodation", cityContext, dataConfidence, {
+            kind: "accommodation",
+            accommodation: adjusted as unknown as Omit<AccommodationModelInputs, "occupancyRamp">,
+          });
+        }
+        const base = (archetype === "mice" ? miceInputs : eventInputs) as unknown as Record<string, number>;
         const adjusted = { ...base };
         for (const [k, pct] of Object.entries(d)) adjusted[k] = base[k] * (1 + pct / 100);
         return runScenario("event", cityContext, dataConfidence, {
@@ -93,7 +114,7 @@ export function Step6Sensitivity() {
         return null;
       }
     },
-    [archetype, naturalInputs, manmadeInputs, eventInputs, manmadeCatchmentZones, manmadeCompetitors, cityContext, dataConfidence],
+    [engine, archetype, naturalInputs, manmadeInputs, eventInputs, miceInputs, accommodationInputs, manmadeCatchmentZones, manmadeCompetitors, cityContext, dataConfidence],
   );
 
   const whatIf = React.useMemo(() => computeForDeltas(deltas), [computeForDeltas, deltas]);

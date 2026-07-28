@@ -1,5 +1,6 @@
 import { Document, Page, Text, View, StyleSheet } from "@react-pdf/renderer";
 import type { ReportPayload } from "@/lib/pdf/types";
+import { headlineLabel } from "@/lib/headline-labels";
 
 const styles = StyleSheet.create({
   page: { padding: 36, fontSize: 10, fontFamily: "Helvetica", color: "#0f172a" },
@@ -88,7 +89,7 @@ export function ReportDocument({ data }: { data: ReportPayload }) {
         <View style={styles.kpiGrid}>
           {Object.entries(archetypeResult.headline).map(([k, v]) => (
             <View key={k} style={styles.kpiCard}>
-              <Text style={styles.kpiLabel}>{k.replace(/([A-Z])/g, " $1")}</Text>
+              <Text style={styles.kpiLabel}>{headlineLabel(k)}</Text>
               <Text style={styles.kpiValue}>{typeof v === "number" ? v.toLocaleString() : String(v)}</Text>
             </View>
           ))}
@@ -151,7 +152,7 @@ export function ReportDocument({ data }: { data: ReportPayload }) {
       <Page size="A4" style={styles.page}>
         <Text style={styles.h1}>Data & assumptions provenance</Text>
         <Text style={styles.subtitle}>
-          Every figure behind this scenario — origin, timestamp, license, and confidence. High = live API, Medium =
+          Every figure behind this scenario — origin, timestamp, license, and confidence. High = live data, Medium =
           cited benchmark, Low = user assumption.
         </Text>
 

@@ -47,7 +47,7 @@ export function Step5Verdict() {
               Confidence: <span className="capitalize">{confidence}</span>
             </p>
             <p className="text-xs text-muted-foreground">
-              Derived from the share of live-API vs. benchmark vs. user-assumption inputs behind this verdict.
+              Derived from the mix of live data, cited benchmarks, and assumptions behind this verdict.
               {viability.downgradedForConfidence && " A GO score was downgraded to CONDITIONAL because of low overall confidence."}
             </p>
           </div>
@@ -96,7 +96,7 @@ export function Step5Verdict() {
         </CardContent>
       </Card>
 
-      {archetype === "event" && (
+      {(archetype === "events" || archetype === "mice") && (
         <Card>
           <CardHeader>
             <CardTitle>Economic impact (public lens)</CardTitle>

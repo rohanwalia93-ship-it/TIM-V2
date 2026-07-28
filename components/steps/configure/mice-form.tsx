@@ -7,11 +7,11 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { NumberField } from "@/components/steps/configure/number-field";
 import { useScenarioStore } from "@/lib/store/scenarioStore";
-import { buildEventScalarDefaults, type EventScalarKey } from "@/lib/model-defaults/event";
+import { buildMiceScalarDefaults, type MiceScalarKey } from "@/lib/model-defaults/mice";
 import type { ResolvedValue } from "@/lib/sources/types";
 
-const PRIMARY_KEYS: EventScalarKey[] = ["totalAttendance", "ticketPriceUsd", "incrementalityRatePercent", "hostingCostUsd", "regionalOutputMultiplier"];
-const ADVANCED_KEYS: EventScalarKey[] = [
+const PRIMARY_KEYS: MiceScalarKey[] = ["totalAttendance", "ticketPriceUsd", "incrementalityRatePercent", "hostingCostUsd", "regionalOutputMultiplier"];
+const ADVANCED_KEYS: MiceScalarKey[] = [
   "venueCapacity",
   "eventDurationDays",
   "overnightSharePercent",
@@ -28,27 +28,27 @@ const ADVANCED_KEYS: EventScalarKey[] = [
   "horizonYears",
 ];
 
-export function EventForm() {
+export function MiceForm() {
   const cityContext = useScenarioStore((s) => s.cityContext);
-  const eventInputs = useScenarioStore((s) => s.eventInputs);
-  const setEventInputs = useScenarioStore((s) => s.setEventInputs);
+  const miceInputs = useScenarioStore((s) => s.miceInputs);
+  const setMiceInputs = useScenarioStore((s) => s.setMiceInputs);
   const registerResolvedValue = useScenarioStore((s) => s.registerResolvedValue);
 
-  const defaults = React.useMemo(() => buildEventScalarDefaults(cityContext), [cityContext]);
+  const defaults = React.useMemo(() => buildMiceScalarDefaults(cityContext), [cityContext]);
 
   React.useEffect(() => {
-    if (Object.keys(eventInputs).length > 0) return;
-    const initial: Partial<Record<EventScalarKey, number>> = {};
-    for (const [key, rv] of Object.entries(defaults) as [EventScalarKey, ResolvedValue<number>][]) {
+    if (Object.keys(miceInputs).length > 0) return;
+    const initial: Partial<Record<MiceScalarKey, number>> = {};
+    for (const [key, rv] of Object.entries(defaults) as [MiceScalarKey, ResolvedValue<number>][]) {
       initial[key] = rv.value;
       registerResolvedValue(rv);
     }
-    setEventInputs({ ...initial, isRecurringAnnually: false });
+    setMiceInputs({ ...initial, isRecurringAnnually: false });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  function handleChange(key: EventScalarKey, newValue: number) {
-    setEventInputs({ [key]: newValue });
+  function handleChange(key: MiceScalarKey, newValue: number) {
+    setMiceInputs({ [key]: newValue });
     const base = defaults[key];
     registerResolvedValue(
       newValue === base.value
@@ -57,9 +57,9 @@ export function EventForm() {
     );
   }
 
-  function renderField(key: EventScalarKey) {
+  function renderField(key: MiceScalarKey) {
     const rv = defaults[key];
-    const value = eventInputs[key] ?? rv.value;
+    const value = miceInputs[key] ?? rv.value;
     return <NumberField key={key} resolvedValue={rv} value={value} onChange={(v) => handleChange(key, v)} />;
   }
 
@@ -68,17 +68,17 @@ export function EventForm() {
       <Card>
         <CardContent className="flex items-center justify-between p-4">
           <div>
-            <Label htmlFor="recurring" className="text-sm">
+            <Label htmlFor="mice-recurring" className="text-sm">
               Recurring annual event?
             </Label>
             <p className="text-xs text-muted-foreground">
-              One-off events show a single-year impact; recurring events compound across the appraisal horizon.
+              One-off conferences/exhibitions show a single-year impact; recurring ones compound across the horizon.
             </p>
           </div>
           <Switch
-            id="recurring"
-            checked={Boolean(eventInputs.isRecurringAnnually)}
-            onCheckedChange={(checked) => setEventInputs({ isRecurringAnnually: checked })}
+            id="mice-recurring"
+            checked={Boolean(miceInputs.isRecurringAnnually)}
+            onCheckedChange={(checked) => setMiceInputs({ isRecurringAnnually: checked })}
           />
         </CardContent>
       </Card>
@@ -86,7 +86,7 @@ export function EventForm() {
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-sm">Key inputs</CardTitle>
-          <CardDescription>Drives incremental spend, economic impact, and hosting return.</CardDescription>
+          <CardDescription>Drives delegate spend, economic impact, and hosting return.</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{PRIMARY_KEYS.map(renderField)}</CardContent>
       </Card>

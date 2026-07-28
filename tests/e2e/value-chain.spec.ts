@@ -1,9 +1,11 @@
 import { test, expect } from "@playwright/test";
 
 const DEMOS = [
-  { label: "Coldplay in Abu Dhabi", archetype: "event" },
-  { label: "Waterfront theme park in Jeddah", archetype: "manmade" },
-  { label: "Desert eco-lodge & dune reserve near Al Ain", archetype: "natural" },
+  { label: "Coldplay in Abu Dhabi", archetype: "events" },
+  { label: "Waterfront theme park in Jeddah", archetype: "attractions (built)" },
+  { label: "Desert eco-lodge & dune reserve near Al Ain", archetype: "attractions (natural)" },
+  { label: "Beach resort in Jeddah", archetype: "accommodation" },
+  { label: "Global tourism conference in Abu Dhabi", archetype: "mice" },
 ];
 
 for (const demo of DEMOS) {

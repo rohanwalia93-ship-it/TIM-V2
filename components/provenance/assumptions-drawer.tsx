@@ -46,7 +46,7 @@ export function AssumptionsDrawer() {
         <SheetHeader>
           <SheetTitle>Data & Assumptions</SheetTitle>
           <SheetDescription>
-            Every figure behind this scenario, with its origin, timestamp, and confidence. High = live API,
+            Every figure behind this scenario, with its origin, timestamp, and confidence. High = live data,
             Medium = cited benchmark, Low = your assumption.
           </SheetDescription>
         </SheetHeader>

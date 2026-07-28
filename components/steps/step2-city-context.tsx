@@ -11,7 +11,7 @@ import { CityMap } from "@/components/dashboard/city-map";
 import { SeasonalityChart } from "@/components/dashboard/seasonality-chart";
 import { liveResolvedValue } from "@/components/dashboard/city-context-helpers";
 import { useApiResource } from "@/lib/hooks/useApiResource";
-import { useScenarioStore } from "@/lib/store/scenarioStore";
+import { useScenarioStore, getEngine } from "@/lib/store/scenarioStore";
 import type { CountryProfile } from "@/lib/sources/restCountries";
 import type { WorldBankIndicatorKey, WorldBankResult } from "@/lib/sources/worldbank";
 import type { ClimateResult } from "@/lib/sources/openMeteo";
@@ -24,7 +24,9 @@ import type { WikiSummary } from "@/lib/sources/wikipedia";
 export function Step2CityContext() {
   const city = useScenarioStore((s) => s.city);
   const archetype = useScenarioStore((s) => s.archetype);
+  const product = useScenarioStore((s) => s.product);
   const setStep = useScenarioStore((s) => s.setStep);
+  const engine = getEngine(archetype, product);
   const setCityContext = useScenarioStore((s) => s.setCityContext);
   const registerResolvedValue = useScenarioStore((s) => s.registerResolvedValue);
 
@@ -45,13 +47,13 @@ export function Step2CityContext() {
     lat !== undefined && lon !== undefined ? `/api/attractions?lat=${lat}&lon=${lon}` : null,
   );
   const siteArea = useApiResource<{ site: SiteAreaResult | null }>(
-    archetype === "natural" && lat !== undefined && lon !== undefined ? `/api/site-area?lat=${lat}&lon=${lon}` : null,
+    engine === "natural" && lat !== undefined && lon !== undefined ? `/api/site-area?lat=${lat}&lon=${lon}` : null,
   );
   const airports = useApiResource<{ airConnectivity: AirConnectivityResult | null }>(
     lat !== undefined && lon !== undefined ? `/api/airports?lat=${lat}&lon=${lon}` : null,
   );
   const events = useApiResource<{ result: TicketmasterResult | null; keyConfigured: boolean }>(
-    archetype === "event" && city ? `/api/events?city=${encodeURIComponent(city.cityName)}&countryCode=${city.countryCode}` : null,
+    archetype === "events" && city ? `/api/events?city=${encodeURIComponent(city.cityName)}&countryCode=${city.countryCode}` : null,
   );
   const wiki = useApiResource<{ summary: WikiSummary | null }>(city ? `/api/wiki?title=${encodeURIComponent(city.cityName)}` : null);
 
@@ -252,15 +254,15 @@ export function Step2CityContext() {
             <p className="text-sm text-muted-foreground">No comparable OSM-tagged attractions found within 25km.</p>
           )}
 
-          {archetype === "event" && (
+          {archetype === "events" && (
             <div className="mt-4 border-t border-border pt-4">
               <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                Comparable ticketed events (Ticketmaster)
+                Comparable ticketed events nearby
               </p>
               {!events.data?.keyConfigured ? (
                 <p className="text-sm text-muted-foreground">
-                  No <code>TICKETMASTER_API_KEY</code> configured — comparable-event pricing will use a cited benchmark default
-                  in Step 3 instead of live data. Add the free key anytime to switch this to live data.
+                  Live ticketing data isn&apos;t connected yet — comparable-event pricing will use a cited benchmark
+                  default in Step 3 instead. Ask your admin to connect it anytime to switch this to live data.
                 </p>
               ) : events.loading ? (
                 <Skeleton className="h-16 w-full" />

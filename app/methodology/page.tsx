@@ -39,7 +39,7 @@ const SECTIONS = [
   {
     title: "Guardrails against fabrication",
     body:
-      "Every number that reaches the UI passes through a single resolveInput() choke point: it tries a live free API first, falls back to a cited industry benchmark (lib/benchmarks.ts, each with a source and URL), and finally accepts a clearly-flagged user assumption. No code path returns an untagged number. The verdict's overall Confidence rating (High/Medium/Low) is derived from the mix of live vs. benchmark vs. assumption inputs behind it, and every exported PDF appends a full data-provenance table.",
+      "Every number shown in the tool follows the same priority order: try live, current data first; if that isn't available, fall back to a cited industry benchmark; and if neither exists, ask you to enter an assumption — clearly labeled as such. Nothing is ever silently invented. The verdict's overall Confidence rating (High/Medium/Low) reflects the mix of live, benchmark, and assumption inputs behind it, and every exported report appends a full data-provenance appendix listing where each figure came from.",
   },
 ];
 

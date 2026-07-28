@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { Compass, ArrowRight, Mountain, Building2, Ticket } from "lucide-react";
+import { Compass, ArrowRight, Ticket, Landmark, BedDouble, Presentation } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -58,9 +58,9 @@ export default function Home() {
           </h1>
           <p className="mt-4 text-sm text-muted-foreground sm:text-base">
             TourViable turns &quot;should we bring this tourism product to this city?&quot; into a board-ready verdict. Every
-            figure is sourced from a free public API or a cited benchmark — never fabricated. Pick a city and a
+            figure is sourced from real data or a cited industry benchmark — never fabricated. Pick a city and a
             product, and walk one guided path from evidence to GO / CONDITIONAL / NO-GO, with full financials and
-            formula transparency along the way.
+            clear reasoning along the way.
           </p>
           <Button size="lg" className="mt-6" onClick={startNew}>
             Start a new scenario
@@ -68,26 +68,33 @@ export default function Home() {
           </Button>
         </div>
 
-        <div className="mt-14 grid gap-4 sm:grid-cols-3">
-          <Card>
-            <CardHeader>
-              <Mountain className="h-5 w-5 text-accent" />
-              <CardTitle className="text-base">Natural</CardTitle>
-              <CardDescription>Cifuentes carrying-capacity cascade + Butler&apos;s TALC.</CardDescription>
-            </CardHeader>
-          </Card>
-          <Card>
-            <CardHeader>
-              <Building2 className="h-5 w-5 text-accent" />
-              <CardTitle className="text-base">Man-made</CardTitle>
-              <CardDescription>Huff gravity / distance-decay attendance forecasting.</CardDescription>
-            </CardHeader>
-          </Card>
+        <div className="mt-14 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <Card>
             <CardHeader>
               <Ticket className="h-5 w-5 text-accent" />
-              <CardTitle className="text-base">Event</CardTitle>
-              <CardDescription>UN Tourism TSA input-output multiplier method.</CardDescription>
+              <CardTitle className="text-base">Events</CardTitle>
+              <CardDescription>Concerts, sports fixtures, and festivals — incremental visitor spend is the whole story.</CardDescription>
+            </CardHeader>
+          </Card>
+          <Card>
+            <CardHeader>
+              <Landmark className="h-5 w-5 text-accent" />
+              <CardTitle className="text-base">Attractions</CardTitle>
+              <CardDescription>Theme parks, museums, eco-lodges, and nature reserves — demand and capacity drive the case.</CardDescription>
+            </CardHeader>
+          </Card>
+          <Card>
+            <CardHeader>
+              <BedDouble className="h-5 w-5 text-accent" />
+              <CardTitle className="text-base">Accommodation</CardTitle>
+              <CardDescription>Resorts and hotels — rate, occupancy, and market supply drive the return.</CardDescription>
+            </CardHeader>
+          </Card>
+          <Card>
+            <CardHeader>
+              <Presentation className="h-5 w-5 text-accent" />
+              <CardTitle className="text-base">MICE</CardTitle>
+              <CardDescription>Conferences and exhibitions — delegate spend and destination fit drive the case.</CardDescription>
             </CardHeader>
           </Card>
         </div>

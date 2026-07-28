@@ -7,19 +7,24 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 import { PillarRadar } from "@/components/dashboard/pillar-radar";
-import { useScenarioStore } from "@/lib/store/scenarioStore";
+import { useScenarioStore, getEngine, ARCHETYPE_LABELS } from "@/lib/store/scenarioStore";
 import { overallConfidence } from "@/lib/resolveInput";
 import { runScenario, type RunScenarioResult } from "@/lib/scoring/runScenario";
 import type { NaturalModelInputs } from "@/lib/scoring/natural";
 import type { ManMadeModelInputs } from "@/lib/scoring/manmade";
 import type { EventModelInputs } from "@/lib/scoring/event";
+import type { AccommodationModelInputs } from "@/lib/scoring/accommodation";
 import { formatCurrency } from "@/lib/utils";
+import { headlineLabel } from "@/lib/headline-labels";
 
 export function Step4RunModel() {
   const archetype = useScenarioStore((s) => s.archetype);
+  const product = useScenarioStore((s) => s.product);
   const naturalInputs = useScenarioStore((s) => s.naturalInputs);
   const manmadeInputs = useScenarioStore((s) => s.manmadeInputs);
   const eventInputs = useScenarioStore((s) => s.eventInputs);
+  const miceInputs = useScenarioStore((s) => s.miceInputs);
+  const accommodationInputs = useScenarioStore((s) => s.accommodationInputs);
   const manmadeCatchmentZones = useScenarioStore((s) => s.manmadeCatchmentZones);
   const manmadeCompetitors = useScenarioStore((s) => s.manmadeCompetitors);
   const cityContext = useScenarioStore((s) => s.cityContext);
@@ -29,14 +34,15 @@ export function Step4RunModel() {
   const setStep = useScenarioStore((s) => s.setStep);
 
   const dataConfidence = React.useMemo(() => overallConfidence(Object.values(resolvedValues)), [resolvedValues]);
+  const engine = getEngine(archetype, product);
 
   const scenarioResult: RunScenarioResult | null = React.useMemo(() => {
-    if (!archetype) return null;
+    if (!engine) return null;
     try {
-      if (archetype === "natural") {
+      if (engine === "natural") {
         return runScenario("natural", cityContext, dataConfidence, { kind: "natural", natural: naturalInputs as NaturalModelInputs });
       }
-      if (archetype === "manmade") {
+      if (engine === "manmade") {
         return runScenario("manmade", cityContext, dataConfidence, {
           kind: "manmade",
           manmade: manmadeInputs as ManMadeModelInputs,
@@ -44,11 +50,18 @@ export function Step4RunModel() {
           competitors: manmadeCompetitors,
         });
       }
-      return runScenario("event", cityContext, dataConfidence, { kind: "event", event: eventInputs as EventModelInputs });
+      if (engine === "accommodation") {
+        return runScenario("accommodation", cityContext, dataConfidence, {
+          kind: "accommodation",
+          accommodation: accommodationInputs as Omit<AccommodationModelInputs, "occupancyRamp">,
+        });
+      }
+      const eventSourceInputs = archetype === "mice" ? miceInputs : eventInputs;
+      return runScenario("event", cityContext, dataConfidence, { kind: "event", event: eventSourceInputs as EventModelInputs });
     } catch {
       return null;
     }
-  }, [archetype, naturalInputs, manmadeInputs, eventInputs, manmadeCatchmentZones, manmadeCompetitors, cityContext, dataConfidence]);
+  }, [engine, archetype, naturalInputs, manmadeInputs, eventInputs, miceInputs, accommodationInputs, manmadeCatchmentZones, manmadeCompetitors, cityContext, dataConfidence]);
 
   React.useEffect(() => {
     if (!scenarioResult) return;
@@ -97,14 +110,14 @@ export function Step4RunModel() {
         <Card>
           <CardHeader>
             <CardTitle>Headline metrics</CardTitle>
-            <CardDescription>Key outputs from the {archetype} model.</CardDescription>
+            <CardDescription>Key outputs from the {archetype ? ARCHETYPE_LABELS[archetype] : ""} model.</CardDescription>
           </CardHeader>
           <CardContent>
             <dl className="grid grid-cols-2 gap-3 text-sm">
               {Object.entries(archetypeResult.headline).map(([key, val]) => (
                 <div key={key} className="rounded-md border border-border p-2">
                   <dt className="text-[11px] uppercase tracking-wide text-muted-foreground">
-                    {key.replace(/([A-Z])/g, " $1")}
+                    {headlineLabel(key)}
                   </dt>
                   <dd className="font-semibold tabular-nums">
                     {typeof val === "number"

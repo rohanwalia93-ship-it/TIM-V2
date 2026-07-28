@@ -10,6 +10,7 @@ import type { DcfResult } from "@/lib/finance/dcf";
 import type { NaturalModelInputs } from "@/lib/scoring/natural";
 import type { ManMadeModelInputs, CatchmentZone, Competitor } from "@/lib/scoring/manmade";
 import type { EventModelInputs } from "@/lib/scoring/event";
+import type { AccommodationModelInputs } from "@/lib/scoring/accommodation";
 import type { CountryProfile } from "@/lib/sources/restCountries";
 import type { WorldBankIndicatorKey, WorldBankResult } from "@/lib/sources/worldbank";
 import type { ClimateResult } from "@/lib/sources/openMeteo";
@@ -18,19 +19,59 @@ import type { AirConnectivityResult } from "@/lib/sources/ourAirports";
 import type { TicketmasterResult } from "@/lib/sources/ticketmaster";
 import type { WikiSummary } from "@/lib/sources/wikipedia";
 
-export type Archetype = "natural" | "manmade" | "event";
+/** The 4 product categories a user picks from in Step 1. */
+export type Archetype = "events" | "attractions" | "accommodation" | "mice";
+
+/** Which calculation engine actually runs — Attractions splits into two depending on the chosen product. */
+export type Engine = "event" | "manmade" | "natural" | "accommodation";
 
 export const ARCHETYPE_LABELS: Record<Archetype, string> = {
-  natural: "Natural",
-  manmade: "Man-made",
-  event: "Event-based",
+  events: "Events",
+  attractions: "Attractions",
+  accommodation: "Accommodation",
+  mice: "MICE",
 };
 
 export const ARCHETYPE_PRODUCTS: Record<Archetype, string[]> = {
-  natural: ["Desert eco-lodge & dune reserve", "Nature reserve / wildlife park", "Coastal/marine reserve", "Mountain / trekking reserve"],
-  manmade: ["Waterfront theme park", "Indoor entertainment complex", "Aquarium / zoo", "Cultural district / museum quarter"],
-  event: ["Concert / stadium show", "Sports fixture / exhibition game", "Festival", "Convention / trade show"],
+  events: ["Concert / stadium show", "Sports fixture / exhibition game", "Festival"],
+  attractions: [
+    "Waterfront theme park",
+    "Indoor entertainment complex",
+    "Aquarium / zoo",
+    "Cultural district / museum quarter",
+    "Desert eco-lodge & dune reserve",
+    "Nature reserve / wildlife park",
+    "Coastal / marine reserve",
+    "Mountain / trekking reserve",
+  ],
+  accommodation: ["Resort / beach hotel", "City business hotel", "Boutique / heritage hotel", "Serviced apartments"],
+  mice: ["Convention / trade show", "Corporate conference", "Incentive travel program", "Exhibition / trade fair"],
 };
+
+/** Attractions products that run the carrying-capacity engine instead of the attendance-forecast engine. */
+const NATURAL_ATTRACTION_PRODUCTS = new Set([
+  "Desert eco-lodge & dune reserve",
+  "Nature reserve / wildlife park",
+  "Coastal / marine reserve",
+  "Mountain / trekking reserve",
+]);
+
+/** Product is stored as "Concept name — Category" or just "Category" — this strips the concept-name prefix. */
+export function extractProductCategory(product: string): string {
+  const idx = product.lastIndexOf(" — ");
+  return idx === -1 ? product : product.slice(idx + 3);
+}
+
+export function getEngine(archetype: Archetype | null, product: string | null): Engine | null {
+  if (!archetype) return null;
+  if (archetype === "events" || archetype === "mice") return "event";
+  if (archetype === "accommodation") return "accommodation";
+  if (archetype === "attractions") {
+    if (product && NATURAL_ATTRACTION_PRODUCTS.has(extractProductCategory(product))) return "natural";
+    return "manmade";
+  }
+  return null;
+}
 
 export interface CityContextData {
   countryProfile?: CountryProfile | null;
@@ -68,6 +109,8 @@ export interface ScenarioState {
   naturalInputs: Partial<NaturalModelInputs>;
   manmadeInputs: Partial<ManMadeModelInputs>;
   eventInputs: Partial<EventModelInputs>;
+  miceInputs: Partial<EventModelInputs>;
+  accommodationInputs: Partial<AccommodationModelInputs>;
   manmadeCityPopulationEstimate: number | null;
   manmadeCatchmentZones: CatchmentZone[];
   manmadeCompetitors: Competitor[];
@@ -88,6 +131,8 @@ export interface ScenarioState {
   setNaturalInputs: (patch: Partial<NaturalModelInputs>) => void;
   setManmadeInputs: (patch: Partial<ManMadeModelInputs>) => void;
   setEventInputs: (patch: Partial<EventModelInputs>) => void;
+  setMiceInputs: (patch: Partial<EventModelInputs>) => void;
+  setAccommodationInputs: (patch: Partial<AccommodationModelInputs>) => void;
   setManmadeCatchment: (population: number, zones: CatchmentZone[], competitors: Competitor[]) => void;
   setResults: (results: ScenarioResults) => void;
   reset: () => void;
@@ -110,6 +155,8 @@ const initialSlice = () => ({
   naturalInputs: {},
   manmadeInputs: {},
   eventInputs: {},
+  miceInputs: {},
+  accommodationInputs: {},
   manmadeCityPopulationEstimate: null,
   manmadeCatchmentZones: [],
   manmadeCompetitors: [],
@@ -137,6 +184,8 @@ export const useScenarioStore = create<ScenarioState>()(
       setManmadeCatchment: (manmadeCityPopulationEstimate, manmadeCatchmentZones, manmadeCompetitors) =>
         set({ manmadeCityPopulationEstimate, manmadeCatchmentZones, manmadeCompetitors }),
       setEventInputs: (patch) => set((s) => ({ eventInputs: { ...s.eventInputs, ...patch } })),
+      setMiceInputs: (patch) => set((s) => ({ miceInputs: { ...s.miceInputs, ...patch } })),
+      setAccommodationInputs: (patch) => set((s) => ({ accommodationInputs: { ...s.accommodationInputs, ...patch } })),
       setResults: (results) => set({ results }),
       reset: () => set({ ...initialSlice() }),
     }),

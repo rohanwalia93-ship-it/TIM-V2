@@ -197,6 +197,60 @@ export const BENCHMARKS = {
     url: "https://www.unwto.org/tourism-satellite-account",
   },
 
+  // ---- MICE (reuses the Event engine with delegate-travel defaults) ------
+  miceIncrementalityRatePercentDefault: {
+    value: 90,
+    source: "ICCA / UFI meetings-industry benchmarks — delegate travel is overwhelmingly incremental (business travelers who wouldn't otherwise visit)",
+    url: "https://www.iccaworld.org/knowledge/",
+  },
+  miceRegistrationFeeUsdDefault: {
+    value: 450,
+    source: "ICCA / UFI meetings-industry average delegate registration-fee benchmark",
+    url: "https://www.iccaworld.org/knowledge/",
+  },
+  miceOvernightSharePercentDefault: {
+    value: 75,
+    source: "ICCA — share of conference/exhibition delegates who stay overnight",
+    url: "https://www.iccaworld.org/knowledge/",
+  },
+  miceAvgNightsDefault: {
+    value: 3.5,
+    source: "ICCA / UFI average delegate length-of-stay benchmark",
+    url: "https://www.iccaworld.org/knowledge/",
+  },
+
+  // ---- Accommodation (hotel/resort pro-forma) -----------------------------
+  hotelAdrUsdDefault: {
+    value: 180,
+    source: "STR Global — average daily rate (ADR) benchmark, upper-midscale segment",
+    url: "https://str.com/data-insights-blog",
+  },
+  hotelStabilizedOccupancyPercentDefault: {
+    value: 68,
+    source: "STR Global — stabilized-year occupancy benchmark",
+    url: "https://str.com/data-insights-blog",
+  },
+  hotelOccupancyRampDefault: {
+    value: [0.45, 0.6, 0.68, 0.68, 0.68],
+    source: "STR Global / hotel-development industry typical opening occupancy ramp",
+    url: "https://str.com/data-insights-blog",
+  },
+  hotelOtherRevenuePercentOfRoomsDefault: {
+    value: 35,
+    source: "CBRE Hotel Horizons — F&B/spa/other revenue as % of rooms revenue, full-service benchmark",
+    url: "https://www.cbre.com/insights/books/us-hotel-horizons",
+  },
+  hotelGopMarginPercentDefault: {
+    value: 32,
+    source: "CBRE Hotel Horizons — Gross Operating Profit (GOP) margin benchmark",
+    url: "https://www.cbre.com/insights/books/us-hotel-horizons",
+  },
+  hotelConstructionCostPerKeyUsdDefault: {
+    value: 220_000,
+    source: "CBRE / HVS construction cost per key — upper-midscale/upscale benchmark",
+    url: "https://www.hvs.com/",
+  },
+
   // ---- Access & connectivity ----------------------------------------------
   driveTimeAvgSpeedKmh: {
     value: 60,

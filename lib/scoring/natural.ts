@@ -137,6 +137,20 @@ export function runNaturalModel(inputs: NaturalModelInputs): ArchetypeResult {
       note: "Fewer than ~146 comfortable days/year materially compresses the revenue window — model seasonality carefully into pricing.",
     });
   }
+  if (inputs.fragilityCf + inputs.biodiversityCf > 0.5) {
+    riskFlags.push({
+      label: "High ecological fragility",
+      severity: "medium" as const,
+      note: "Combined fragility and biodiversity-sensitivity factors are high — this site has limited room to absorb future demand growth without environmental degradation.",
+    });
+  }
+  if (inputs.managementCapacityPercent < 40) {
+    riskFlags.push({
+      label: "Weak management capacity",
+      severity: (utilizationRatio > 0.8 ? "high" : "medium") as "high" | "medium",
+      note: "Management capacity below ~40% means the site is not yet equipped (staffing, monitoring, infrastructure) to safely operate near its real carrying capacity — invest here before scaling visitor numbers.",
+    });
+  }
 
   return {
     moduleName: "Natural — Carrying-Capacity & Sustainability Model",

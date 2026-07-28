@@ -150,6 +150,20 @@ export function runManMadeModel(inputs: ManMadeModelInputs): ArchetypeResult {
       note: "Modeled Huff share is low — nearby comparable attractions are absorbing most addressable demand. A stronger USP or repositioning may be required.",
     });
   }
+  if (inputs.ownAttractivenessScore < 50) {
+    riskFlags.push({
+      label: "Weak differentiation",
+      severity: "medium" as const,
+      note: "The concept's own attractiveness score is below a solidly-executed benchmark — even with light competition, a weak concept won't convert catchment population into visitors.",
+    });
+  }
+  if (capacityUtilization < 0.3) {
+    riskFlags.push({
+      label: "Overbuilt for demand",
+      severity: "low" as const,
+      note: "Forecast attendance uses under a third of designed daily capacity — the venue may be sized (and capitalized) well beyond what demand supports.",
+    });
+  }
 
   return {
     moduleName: "Man-made — Attendance-Forecast & Investment Model",

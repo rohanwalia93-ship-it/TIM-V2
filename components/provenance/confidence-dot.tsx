@@ -8,9 +8,9 @@ const COLOR: Record<Confidence, string> = {
 };
 
 const LABEL: Record<Confidence, string> = {
-  high: "High confidence — live API data",
-  medium: "Medium confidence — cited benchmark default",
-  low: "Low confidence — user assumption",
+  high: "High confidence — live, current data",
+  medium: "Medium confidence — cited industry benchmark",
+  low: "Low confidence — your assumption",
 };
 
 export function ConfidenceDot({ confidence, className }: { confidence: Confidence; className?: string }) {

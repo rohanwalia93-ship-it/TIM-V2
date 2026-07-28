@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { motion } from "framer-motion";
-import { Mountain, Building2, Ticket, ArrowRight } from "lucide-react";
+import { Landmark, BedDouble, Ticket, Presentation, ArrowRight } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -24,21 +24,26 @@ import {
   type Archetype,
 } from "@/lib/store/scenarioStore";
 
-const ARCHETYPE_META: Record<Archetype, { icon: typeof Mountain; description: string; examples: string }> = {
-  natural: {
-    icon: Mountain,
-    description: "Sites bounded by ecosystem, land, and climate — carrying capacity is the central question.",
-    examples: "Eco-lodges, nature reserves, coastal/marine parks, dune reserves",
-  },
-  manmade: {
-    icon: Building2,
-    description: "Built attractions competing for catchment demand — attendance forecasting drives the case.",
-    examples: "Theme parks, museums, aquariums, entertainment districts",
-  },
-  event: {
+const ARCHETYPE_META: Record<Archetype, { icon: typeof Ticket; description: string; examples: string }> = {
+  events: {
     icon: Ticket,
     description: "Time-boxed draws where incremental visitor spend is the whole story.",
-    examples: "Concerts, sports fixtures, festivals, conventions",
+    examples: "Concerts, sports fixtures, festivals",
+  },
+  attractions: {
+    icon: Landmark,
+    description: "Places people travel to see — built or natural, demand and capacity drive the case.",
+    examples: "Theme parks, museums, eco-lodges, nature reserves",
+  },
+  accommodation: {
+    icon: BedDouble,
+    description: "Rooms to fill — rate, occupancy, and market supply drive the return.",
+    examples: "Resorts, business hotels, boutique hotels, serviced apartments",
+  },
+  mice: {
+    icon: Presentation,
+    description: "Meetings, incentives, conferences & exhibitions — delegate spend and destination fit drive the case.",
+    examples: "Conventions, corporate conferences, incentive travel, trade exhibitions",
   },
 };
 
@@ -87,11 +92,11 @@ export function Step1Frame() {
 
       <Card>
         <CardHeader>
-          <CardTitle>2. Product archetype</CardTitle>
-          <CardDescription>Each archetype runs a distinct calculation methodology.</CardDescription>
+          <CardTitle>2. Product category</CardTitle>
+          <CardDescription>Each category runs a calculation approach fit to how it actually makes money.</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
             {(Object.keys(ARCHETYPE_META) as Archetype[]).map((a) => {
               const meta = ARCHETYPE_META[a];
               const Icon = meta.icon;
@@ -126,11 +131,11 @@ export function Step1Frame() {
         <Card>
           <CardHeader>
             <CardTitle>3. Specific product</CardTitle>
-            <CardDescription>Pick a category and, optionally, name your concept.</CardDescription>
+            <CardDescription>Pick a type and, optionally, name your concept.</CardDescription>
           </CardHeader>
           <CardContent className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
-              <Label htmlFor="category">Category</Label>
+              <Label htmlFor="category">Type</Label>
               <Select value={category} onValueChange={setCategory}>
                 <SelectTrigger id="category">
                   <SelectValue placeholder="Choose a category" />
