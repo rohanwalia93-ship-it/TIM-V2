@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { VerdictPill } from "@/components/verdict-pill";
 import { CashflowChart } from "@/components/dashboard/cashflow-chart";
+import { ReturnRiskDial } from "@/components/dashboard/return-risk-dial";
 import { useScenarioStore } from "@/lib/store/scenarioStore";
 import { formatCurrency, formatPercent } from "@/lib/utils";
 import { overallConfidence } from "@/lib/resolveInput";
@@ -28,6 +29,11 @@ export function Step5Verdict() {
   }
 
   const { viability, dcf, archetypeResult, discountRate } = results;
+  const pillarScore = (pillar: string) => viability.pillars.find((p) => p.pillar === pillar)?.score ?? 50;
+  const demandScore = pillarScore("demand");
+  const economicsScore = pillarScore("economics");
+  const competitionScore = pillarScore("competition");
+  const riskScorePillar = pillarScore("risk");
 
   return (
     <div className="space-y-6">
@@ -39,20 +45,36 @@ export function Step5Verdict() {
         <VerdictPill verdict={viability.verdict} size="lg" />
       </div>
 
-      <Card className={confidence === "low" ? "border-conditional-border" : undefined}>
-        <CardContent className="flex items-center gap-3 p-4">
-          <ShieldAlert className="h-5 w-5 text-muted-foreground" />
-          <div>
-            <p className="text-sm font-medium">
-              Confidence: <span className="capitalize">{confidence}</span>
+      <div className="grid gap-4 sm:grid-cols-[auto_1fr]">
+        <Card>
+          <CardContent className="flex flex-col items-center gap-1 p-4">
+            <ReturnRiskDial
+              returnScore={(demandScore + economicsScore + competitionScore) / 3}
+              riskScore={100 - riskScorePillar}
+              showAxisLabels
+            />
+            <p className="max-w-[200px] text-center text-xs text-muted-foreground">
+              Return = avg. of Demand, Economics & Competition pillars. Risk = inverse of the Risk pillar. Same
+              5 pillars as the radar below, plotted on two axes instead of five.
             </p>
-            <p className="text-xs text-muted-foreground">
-              Derived from the mix of live data, cited benchmarks, and assumptions behind this verdict.
-              {viability.downgradedForConfidence && " A GO score was downgraded to CONDITIONAL because of low overall confidence."}
-            </p>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+
+        <Card className={confidence === "low" ? "border-conditional-border" : undefined}>
+          <CardContent className="flex items-center gap-3 p-4">
+            <ShieldAlert className="h-5 w-5 text-muted-foreground" />
+            <div>
+              <p className="text-sm font-medium">
+                Confidence: <span className="capitalize">{confidence}</span>
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Derived from the mix of live data, cited benchmarks, and assumptions behind this verdict.
+                {viability.downgradedForConfidence && " A GO score was downgraded to CONDITIONAL because of low overall confidence."}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <Card>
