@@ -1,0 +1,366 @@
+// TIM (Tourism Investment Monitor) — core schema.
+// Written against SQLite for local/dev (see prisma.config.ts / DATABASE_URL) but kept to a
+// Postgres-portable subset (no SQLite-only types) so switching DATABASE_URL to a hosted
+// Postgres instance is a datasource-provider change, not a schema rewrite.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+// ---------------------------------------------------------------------------
+// Auth / RBAC (brief §9 roles: Analyst, Reviewer, Approver, Administrator, Viewer)
+// ---------------------------------------------------------------------------
+
+enum Role {
+  ANALYST
+  REVIEWER
+  APPROVER
+  ADMINISTRATOR
+  VIEWER
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String?
+  role          Role      @default(ANALYST)
+  createdAt     DateTime  @default(now())
+
+  accounts      Account[]
+  sessions      Session[]
+
+  scenariosOwned    Scenario[]        @relation("ScenarioOwner")
+  versionsCreated   ScenarioVersion[] @relation("VersionCreatedBy")
+  versionsApproved  ScenarioVersion[] @relation("VersionApprovedBy")
+  auditLogEntries   AuditLogEntry[]
+  evidenceOverrides EvidenceValue[]   @relation("EvidenceOverriddenBy")
+}
+
+// Auth.js (NextAuth v5) Prisma-adapter tables — unused while only the dev Credentials
+// provider is wired (Credentials requires JWT sessions, not DB sessions), but present so
+// adding a real Entra ID / OAuth provider later is additive, not a migration.
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ---------------------------------------------------------------------------
+// Portfolio / Scenario (brief §1 Stage 0 portfolio, §1 Stage 1 opportunity brief)
+// ---------------------------------------------------------------------------
+
+enum InterventionType {
+  DEVELOP
+  FUND
+  HOST
+  ACQUIRE
+  INCENTIVISE
+  REGULATE
+}
+
+enum ProductClass {
+  EVENT
+  ATTRACTION_BUILT
+  ATTRACTION_NATURAL
+  ACCOMMODATION
+  MICE
+  CULTURAL_PRODUCT
+  DESTINATION_ENABLING_ASSET
+}
+
+enum ScenarioStage {
+  BRIEF
+  EVIDENCE_PLAN
+  DIAGNOSTIC
+  DEMAND_MODEL
+  APPRAISAL
+  STRATEGY_RISK
+  OPTIONS_RECOMMENDATION
+  DECISION_PACK
+}
+
+enum Recommendation {
+  PROCEED
+  PROCEED_SUBJECT_TO_CONDITIONS
+  PILOT_PHASE
+  DEFER_PENDING_EVIDENCE
+  DO_NOT_PROCEED
+}
+
+model Scenario {
+  id                 String   @id @default(cuid())
+  name               String
+  description        String?
+
+  destinationName    String
+  siteName           String?
+  lat                Float?
+  lon                Float?
+  countryCode        String?
+
+  interventionType   InterventionType
+  productClass       ProductClass
+  productSubtype     String?
+  proponent          String?
+  deliveryModel      String?
+  strategicObjective String?
+  targetDate         DateTime?
+  targetSegments     String?
+  preliminaryNotes   String?
+  decisionRequired   String?
+  decisionDate       DateTime?
+
+  sponsor            String?
+  stage              ScenarioStage @default(BRIEF)
+
+  ownerId            String
+  owner              User     @relation("ScenarioOwner", fields: [ownerId], references: [id])
+
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  versions           ScenarioVersion[]
+  auditLogEntries    AuditLogEntry[]
+  uploads            Upload[]
+
+  @@index([stage])
+  @@index([productClass])
+}
+
+model Upload {
+  id           String   @id @default(cuid())
+  scenarioId   String
+  scenario     Scenario @relation(fields: [scenarioId], references: [id], onDelete: Cascade)
+  fileName     String
+  fileType     String
+  sizeBytes    Int
+  storagePath  String
+  uploadedById String?
+  uploadedAt   DateTime @default(now())
+  notes        String?
+}
+
+// A ScenarioVersion is the unit of "lock and issue a recommendation" — every recalculation
+// that an Approver signs off on creates a new version rather than mutating history in place.
+model ScenarioVersion {
+  id               String   @id @default(cuid())
+  scenarioId       String
+  scenario         Scenario @relation(fields: [scenarioId], references: [id], onDelete: Cascade)
+  versionNumber    Int
+
+  modelVersion     String   // effective-dated identifier for the calculation-engine version used
+  inputsSnapshot   String   // JSON: full input set at time of calc (case, scalars, evidence IDs)
+  resultsSnapshot  String?  // JSON: full ArchetypeResult + gate + financial outputs
+
+  scenarioCase     ScenarioCase @default(BASE)
+
+  recommendation          Recommendation?
+  recommendationRationale String? // JSON: gate-by-gate pass/fail + material calcs (the "why" tree)
+
+  isLocked         Boolean  @default(false)
+  createdById      String
+  createdBy        User     @relation("VersionCreatedBy", fields: [createdById], references: [id])
+  approvedById     String?
+  approvedBy       User?    @relation("VersionApprovedBy", fields: [approvedById], references: [id])
+  approvedAt       DateTime?
+
+  createdAt        DateTime @default(now())
+
+  evidenceValues   EvidenceValue[]
+  gateResults      GateResult[]
+  riskItems        RiskItem[]
+
+  @@unique([scenarioId, versionNumber, scenarioCase])
+  @@index([scenarioId])
+}
+
+enum ScenarioCase {
+  BASE
+  DOWNSIDE
+  UPSIDE
+}
+
+// ---------------------------------------------------------------------------
+// Evidence (brief §6 EvidenceValue) — the canonical provenance object.
+// Every model input in the app is one row here; no naked numbers reach a calculation.
+// ---------------------------------------------------------------------------
+
+enum EvidenceStatus {
+  LIVE
+  PUBLISHED
+  BENCHMARK
+  ASSUMPTION
+  CLIENT_UPLOAD
+}
+
+enum Confidence {
+  HIGH
+  MEDIUM
+  LOW
+}
+
+model EvidenceValue {
+  id                String   @id @default(cuid())
+  scenarioVersionId String
+  scenarioVersion   ScenarioVersion @relation(fields: [scenarioVersionId], references: [id], onDelete: Cascade)
+
+  metric            String
+  value             String?  // stored as string; numeric metrics parse to Decimal at calc time
+  unit              String
+  geography         String
+  periodStart       DateTime?
+  periodEnd         DateTime?
+  priceBasis        String?
+
+  status            EvidenceStatus
+  sourceName        String
+  sourceUrl         String?
+  datasetId         String?
+  retrievedAt       DateTime
+  publicationDate   DateTime?
+  license           String?
+  transformation    String?
+
+  confidence        Confidence
+  owner             String?
+  approvedBy        String?
+  notes             String?
+
+  overrideReason    String?
+  overriddenById    String?
+  overriddenBy      User?    @relation("EvidenceOverriddenBy", fields: [overriddenById], references: [id])
+  overriddenAt      DateTime?
+
+  createdAt         DateTime @default(now())
+
+  @@index([scenarioVersionId, metric])
+}
+
+// ---------------------------------------------------------------------------
+// Gates (brief §5) — sequential, not a single weighted composite.
+// ---------------------------------------------------------------------------
+
+enum GateNumber {
+  GATE_1_EVIDENCE_SUFFICIENCY
+  GATE_2_FATAL_FLAWS
+  GATE_3_MARKET_VIABILITY
+  GATE_4_FINANCIAL_PUBLIC_VALUE
+  GATE_5_STRATEGIC_DELIVERY
+}
+
+model GateResult {
+  id                String   @id @default(cuid())
+  scenarioVersionId String
+  scenarioVersion   ScenarioVersion @relation(fields: [scenarioVersionId], references: [id], onDelete: Cascade)
+
+  gate              GateNumber
+  passed            Boolean
+  rationale         String   // human-readable explanation, deterministically templated
+  evidenceRefs      String?  // JSON array of EvidenceValue ids / calculation refs behind this gate
+  evaluatedAt       DateTime @default(now())
+
+  @@unique([scenarioVersionId, gate])
+}
+
+// ---------------------------------------------------------------------------
+// Risk register (brief §1 Stage 6)
+// ---------------------------------------------------------------------------
+
+enum RiskRating {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+model RiskItem {
+  id                String   @id @default(cuid())
+  scenarioVersionId String
+  scenarioVersion   ScenarioVersion @relation(fields: [scenarioVersionId], references: [id], onDelete: Cascade)
+
+  category          String
+  description       String
+  likelihood        RiskRating
+  impact            RiskRating
+  inherentRating    RiskRating
+  mitigation        String?
+  owner             String?
+  dueDate           DateTime?
+  residualRating    RiskRating?
+  isDecisionGate    Boolean  @default(false)
+
+  createdAt         DateTime @default(now())
+}
+
+// ---------------------------------------------------------------------------
+// Admin-configurable, version-controlled thresholds & weights (brief §5 Gate 3/5)
+// ---------------------------------------------------------------------------
+
+model ConfigVersion {
+  id            String   @id @default(cuid())
+  key           String   // e.g. "gate3.thresholds", "gate5.mcda.weights"
+  version       String
+  valueJson     String
+  effectiveFrom DateTime
+  approvedById  String?
+  createdAt     DateTime @default(now())
+
+  @@unique([key, version])
+  @@index([key, effectiveFrom])
+}
+
+// ---------------------------------------------------------------------------
+// Audit trail (brief §6: "All thresholds, weights, and model versions are effective-dated";
+// brief §1 Stage 8 change log)
+// ---------------------------------------------------------------------------
+
+model AuditLogEntry {
+  id          String    @id @default(cuid())
+  scenarioId  String?
+  scenario    Scenario? @relation(fields: [scenarioId], references: [id], onDelete: SetNull)
+  userId      String?
+  user        User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  action      String   // e.g. "scenario.created", "evidence.overridden", "version.approved"
+  details     String?  // JSON
+
+  createdAt   DateTime @default(now())
+
+  @@index([scenarioId])
+  @@index([createdAt])
+}

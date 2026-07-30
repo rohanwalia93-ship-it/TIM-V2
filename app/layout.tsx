@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Noto_Sans_Arabic } from "next/font/google";
 import "./globals.css";
 import { MotionConfig } from "framer-motion";
 import { ThemeProvider } from "@/components/theme-provider";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { SessionProvider } from "next-auth/react";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -15,10 +16,15 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const notoSansArabic = Noto_Sans_Arabic({
+  variable: "--font-noto-sans-arabic",
+  subsets: ["arabic"],
+});
+
 export const metadata: Metadata = {
-  title: "TourViable — Tourism Product Viability Engine",
+  title: "TIM — Tourism Investment Monitor",
   description:
-    "Should you launch this tourism product in this city? A board-ready, source-cited viability verdict for natural, man-made, and event-based tourism products.",
+    "Should the destination develop, fund, host, acquire, or reject this tourism product, under what conditions, and why? A gate-based, source-cited investment case for events, attractions, accommodation, and MICE.",
 };
 
 export default function RootLayout({
@@ -29,15 +35,18 @@ export default function RootLayout({
   return (
     <html
       lang="en"
+      dir="ltr"
       suppressHydrationWarning
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} ${notoSansArabic.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col">
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-          <MotionConfig reducedMotion="user">
-            <TooltipProvider delayDuration={200}>{children}</TooltipProvider>
-          </MotionConfig>
-        </ThemeProvider>
+        <SessionProvider>
+          <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+            <MotionConfig reducedMotion="user">
+              <TooltipProvider delayDuration={200}>{children}</TooltipProvider>
+            </MotionConfig>
+          </ThemeProvider>
+        </SessionProvider>
       </body>
     </html>
   );

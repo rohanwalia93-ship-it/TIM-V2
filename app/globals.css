@@ -4,74 +4,79 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+/*
+ * DCT-inspired visual direction (brief §8): warm coral accent, charcoal text, white/warm-stone
+ * surfaces, restrained desert-sand secondary tones. Green/amber/red are reserved for decision
+ * states only (go/conditional/nogo) so they never collide with the brand accent.
+ */
 :root {
-  --background: #f8fafc;
-  --foreground: #0f172a;
+  --background: #faf7f2;
+  --foreground: #2a2521;
   --card: #ffffff;
-  --card-foreground: #0f172a;
-  --muted: #f1f5f9;
-  --muted-foreground: #64748b;
-  --border: #e2e8f0;
-  --input: #e2e8f0;
-  --ring: #4f46e5;
-  --accent: #4f46e5;
-  --accent-foreground: #ffffff;
-  --primary: #0f172a;
-  --primary-foreground: #f8fafc;
-  --secondary: #f1f5f9;
-  --secondary-foreground: #0f172a;
-  --destructive: #dc2626;
+  --card-foreground: #2a2521;
+  --muted: #f1ebe0;
+  --muted-foreground: #6b6156;
+  --border: #e6dccb;
+  --input: #e6dccb;
+  --ring: #d9502f;
+  --accent: #d9502f;
+  --accent-foreground: #fffaf5;
+  --primary: #2a2521;
+  --primary-foreground: #faf7f2;
+  --secondary: #efe4d2;
+  --secondary-foreground: #2a2521;
+  --destructive: #b3261e;
   --destructive-foreground: #fef2f2;
 
-  --go: #059669;
-  --go-bg: #ecfdf5;
-  --go-border: #a7f3d0;
-  --conditional: #b45309;
-  --conditional-bg: #fffbeb;
-  --conditional-border: #fde68a;
-  --nogo: #dc2626;
-  --nogo-bg: #fef2f2;
-  --nogo-border: #fecaca;
+  --go: #1a7a4c;
+  --go-bg: #eaf6ef;
+  --go-border: #a7d9bf;
+  --conditional: #a3660b;
+  --conditional-bg: #fdf3e1;
+  --conditional-border: #f0d191;
+  --nogo: #b3261e;
+  --nogo-bg: #fbeae9;
+  --nogo-border: #eebab5;
 
-  --confidence-high: #059669;
-  --confidence-medium: #d97706;
-  --confidence-low: #94a3b8;
+  --confidence-high: #1a7a4c;
+  --confidence-medium: #a3660b;
+  --confidence-low: #948a7c;
 
   --radius: 0.75rem;
 }
 
 .dark {
-  --background: #0b1120;
-  --foreground: #e2e8f0;
-  --card: #111827;
-  --card-foreground: #e2e8f0;
-  --muted: #1e293b;
-  --muted-foreground: #94a3b8;
-  --border: #1f2937;
-  --input: #1f2937;
-  --ring: #818cf8;
-  --accent: #818cf8;
-  --accent-foreground: #0b1120;
-  --primary: #e2e8f0;
-  --primary-foreground: #0b1120;
-  --secondary: #1e293b;
-  --secondary-foreground: #e2e8f0;
-  --destructive: #f87171;
+  --background: #1c1815;
+  --foreground: #ece4d6;
+  --card: #262019;
+  --card-foreground: #ece4d6;
+  --muted: #2e2721;
+  --muted-foreground: #a89a86;
+  --border: #3a3129;
+  --input: #3a3129;
+  --ring: #ea7250;
+  --accent: #ea7250;
+  --accent-foreground: #1c1815;
+  --primary: #ece4d6;
+  --primary-foreground: #1c1815;
+  --secondary: #3a3129;
+  --secondary-foreground: #ece4d6;
+  --destructive: #f0857c;
   --destructive-foreground: #450a0a;
 
-  --go: #34d399;
-  --go-bg: #052e21;
-  --go-border: #065f46;
-  --conditional: #fbbf24;
+  --go: #4bbf88;
+  --go-bg: #0f2a1e;
+  --go-border: #1f5c3f;
+  --conditional: #e0ac4f;
   --conditional-bg: #2e2205;
-  --conditional-border: #92400e;
-  --nogo: #f87171;
-  --nogo-bg: #2e0a0a;
-  --nogo-border: #7f1d1d;
+  --conditional-border: #7a5410;
+  --nogo: #f0857c;
+  --nogo-bg: #33110e;
+  --nogo-border: #7a2a22;
 
-  --confidence-high: #34d399;
-  --confidence-medium: #fbbf24;
-  --confidence-low: #64748b;
+  --confidence-high: #4bbf88;
+  --confidence-medium: #e0ac4f;
+  --confidence-low: #7d7264;
 }
 
 @theme inline {
@@ -113,6 +118,7 @@
 
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --font-arabic: var(--font-noto-sans-arabic);
 }
 
 @layer base {
@@ -123,6 +129,11 @@
     @apply bg-background text-foreground;
     font-feature-settings: "cv11", "ss01";
   }
+}
+
+/* Bilingual-ready layout (brief §8): English LTR default, Arabic RTL when html[dir="rtl"]. */
+html[dir="rtl"] body {
+  font-family: var(--font-arabic), var(--font-sans);
 }
 
 @media (prefers-reduced-motion: reduce) {
