@@ -41,18 +41,19 @@ export default async function ScenarioDetailPage({ params }: { params: Promise<{
           <CardHeader>
             <CardTitle>8-stage journey</CardTitle>
             <CardDescription>
-              Stage 1 (this brief) is captured. Stages 2–8 are being built out phase by phase per AUDIT.md — this page
-              will not claim a stage is done until its gates and calculations are real, not placeholders.
+              Stages 1–2 are real. Stages 3–8 are being built out phase by phase per AUDIT.md — this page will not
+              claim a stage is done until its gates and calculations are real, not placeholders.
             </CardDescription>
           </CardHeader>
           <CardContent>
             <ol className="space-y-2">
               {STAGE_ORDER.map((stage, i) => {
                 const meta = STAGE_META[stage];
-                const isDone = i < currentIndex || (i === currentIndex && stage === "BRIEF");
-                const isBuilt = stage === "BRIEF"; // only Stage 1 has a real implementation so far
-                return (
-                  <li key={stage} className="flex items-start gap-3 rounded-md border border-border p-3">
+                const isDone = i < currentIndex;
+                const isBuilt = stage === "BRIEF" || stage === "EVIDENCE_PLAN";
+                const href = stage === "EVIDENCE_PLAN" ? `/portfolio/${scenario.id}/evidence` : undefined;
+                const content = (
+                  <>
                     {isDone ? (
                       <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-go" />
                     ) : (
@@ -69,6 +70,17 @@ export default async function ScenarioDetailPage({ params }: { params: Promise<{
                         <Construction className="h-3 w-3" />
                         Not yet built
                       </Badge>
+                    )}
+                  </>
+                );
+                return (
+                  <li key={stage}>
+                    {href ? (
+                      <Link href={href} className="flex items-start gap-3 rounded-md border border-border p-3 hover:border-accent hover:bg-accent/5">
+                        {content}
+                      </Link>
+                    ) : (
+                      <div className="flex items-start gap-3 rounded-md border border-border p-3">{content}</div>
                     )}
                   </li>
                 );

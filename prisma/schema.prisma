@@ -157,6 +157,7 @@ model Scenario {
   versions           ScenarioVersion[]
   auditLogEntries    AuditLogEntry[]
   uploads            Upload[]
+  evidenceValues     EvidenceValue[]
 
   @@index([stage])
   @@index([productClass])
@@ -201,7 +202,6 @@ model ScenarioVersion {
 
   createdAt        DateTime @default(now())
 
-  evidenceValues   EvidenceValue[]
   gateResults      GateResult[]
   riskItems        RiskItem[]
 
@@ -234,11 +234,32 @@ enum Confidence {
   LOW
 }
 
+// The 11 evidence categories the Stage 2 evidence matrix is organized by (brief §1 Stage 2).
+enum EvidenceCategory {
+  DEMAND
+  SUPPLY_COMPETITION
+  ACCESSIBILITY
+  ACCOMMODATION_CAPACITY
+  PRICING_WTP
+  OPERATING_MODEL
+  CAPITAL_OPERATING_COSTS
+  MACROECONOMICS
+  SUSTAINABILITY_CARRYING_CAPACITY
+  ECONOMIC_IMPACT
+  REGULATORY_DELIVERY_READINESS
+}
+
+// EvidenceValue belongs to the Scenario, not a ScenarioVersion: evidence accumulates across
+// Stages 2-5 before any version is ever locked. A ScenarioVersion.inputsSnapshot freezes a
+// JSON copy of the resolved values used for that particular locked calculation, so history
+// stays immutable even as evidenceValues keeps evolving (new rows supersede old ones for the
+// same metric; old rows are kept, never deleted, so source conflicts stay visible).
 model EvidenceValue {
   id                String   @id @default(cuid())
-  scenarioVersionId String
-  scenarioVersion   ScenarioVersion @relation(fields: [scenarioVersionId], references: [id], onDelete: Cascade)
+  scenarioId        String
+  scenario          Scenario @relation(fields: [scenarioId], references: [id], onDelete: Cascade)
 
+  category          EvidenceCategory
   metric            String
   value             String?  // stored as string; numeric metrics parse to Decimal at calc time
   unit              String
@@ -268,7 +289,8 @@ model EvidenceValue {
 
   createdAt         DateTime @default(now())
 
-  @@index([scenarioVersionId, metric])
+  @@index([scenarioId, metric])
+  @@index([scenarioId, category])
 }
 
 // ---------------------------------------------------------------------------
